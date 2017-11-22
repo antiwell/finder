@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">房现者</string>
+
+    <string name="input_userid_hint">请输入用户名</string>
+    <string name="input_password_hint">请输入密码</string>
+
+    <string name="login">登陆</string>
+
+    <string name="dial_title">标题: </string>
+    <string name="dial_name">姓名: </string>
+    <string name="dial_price">价格: </string>
+    <string name="dial_phone_number">电话: </string>
+    <string name="dial_time">时间 : </string>
+
+    <string name="request_times">请求次数: </string>
+
+    <string name="login_failed">登陆失败</string>
+    <string name="login_success">登陆成功</string>
+    <string name="login_failed_password_wrong">密码错误</string>
+    <string name="login_failed_user_noexist">用户不存在</string>
+
+    <string name="can_not_dial">不能调起拨打电话, 请检查权限是否开启</string>
+    <string name="permission_granded_failed">请确认授予了权限</string>
+</resources>

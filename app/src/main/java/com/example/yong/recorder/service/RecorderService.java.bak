@@ -1,0 +1,221 @@
+package com.example.yong.recorder.service;
+
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.media.MediaRecorder;
+import android.os.Environment;
+import android.os.IBinder;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
+import android.util.Log;
+
+import com.example.yong.recorder.upload.RecorderUploader;
+import com.example.yong.report.ReportHouseInfoUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * 实现录音的service
+ * Created by yaojian on 2017/8/15.
+ */
+public class RecorderService extends Service {
+
+    private final static String TAG = "RecorderService";
+
+    private MediaRecorder recorder; //录音的一个实例
+
+    private MyListener mMyListener;
+    private String data_id = "10000";
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.i(TAG, " yaoTest onCreate ");
+
+        mMyListener = new MyListener();
+
+        //监听电话
+        TelephonyManager tm= (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        tm.listen(mMyListener, PhoneStateListener.LISTEN_CALL_STATE);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        Log.i(TAG, " yaoTest onStartCommand");
+        data_id = intent.getStringExtra("data_id");
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        Log.i(TAG, " yaoTest onDestroy");
+        if (mMyListener != null) {
+            TelephonyManager telephony = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+            telephony.listen(mMyListener, PhoneStateListener.LISTEN_NONE);
+        }
+    }
+
+    class  MyListener extends PhoneStateListener{
+
+        private boolean isRecording = false;
+
+        private String mPhoneNumber = "";
+
+        //保存录音文件path
+        private String mSaveFilePath = "";
+
+        //在电话状态改变的时候调用
+        @Override
+        public void onCallStateChanged(int state, String incomingNumber) {
+            switch (state){
+                case TelephonyManager.CALL_STATE_IDLE:
+                    Log.i(TAG, "yaoTest MyListener TelephonyManager.CALL_STATE_IDLE ");
+                    //空闲状态
+                    try{
+                        if (recorder != null && isRecording) {
+                            recorder.stop();//停止录音
+                            recorder.release();//释放资源
+                        }
+
+                        //结束电话后, report房间信息
+                        ReportHouseInfoUtils.reportHouseInfoAfterCallAsync(incomingNumber);
+
+                        //开始上传录音
+                        RecorderUploader mUploader = new RecorderUploader(new RecorderUploader.RecorderUploadListener() {
+                            @Override
+                            public void onUploadFailed(String fileName, int errorCode, String errorStr, IOException e) {
+                                Log.w(TAG, e);
+                                Log.i(TAG, " yaoTest onUploadFailed " + fileName + " errorCode == " + errorCode + " errorStr " + errorStr);
+                            }
+
+                            @Override
+                            public void onUploadSuccess(String fileName) {
+                                Log.i(TAG, " yaoTest onUploadSuccess " + fileName);
+                            }
+                        });
+
+                        //开始上传
+                        mUploader.startPostFileAsync(RecorderService.this, RecorderUploader.RECORDER_POST_URL, mSaveFilePath);
+
+                    }catch(Throwable e){
+                        Log.w(TAG, e);
+                    }finally {
+                        recorder = null;
+                        isRecording = false;
+                        mPhoneNumber = "";
+                        mSaveFilePath = "";
+                    }
+                    break;
+
+                case TelephonyManager.CALL_STATE_RINGING:
+                    Log.i(TAG, " yaoTest MyListener TelephonyManager.CALL_STATE_RINGING");
+//                    prepareRecorder(incomingNumber);
+                    break;
+                case TelephonyManager.CALL_STATE_OFFHOOK:
+                    Log.i(TAG, " yaoTest MyListener TelephonyManager.CALL_STATE_OFFHOOK");
+                    prepareRecorder(incomingNumber);
+
+                    if(!isRecording){
+                        try{
+                            if (recorder != null){
+                                recorder.prepare();//准备录音
+                                recorder.start(); //接听的时候开始录音
+                                isRecording = true;
+                            }
+                        }catch (Throwable e){
+                            Log.w(TAG, e);
+                        }
+                    }
+
+                    break;
+            }
+        }
+
+        /**
+         * 准备录音
+         */
+        private void prepareRecorder(String phoneNumber){
+
+            if(TextUtils.isEmpty(mPhoneNumber)) {
+                mPhoneNumber = phoneNumber;
+            }
+
+            mSaveFilePath = getFilePathToSaveRecorder(phoneNumber);
+
+            if (recorder == null && !isRecording){
+                try{
+                    recorder=new MediaRecorder();//初始化录音对象
+                    recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_RECOGNITION);//设置录音的输入源(麦克)
+                    recorder.setOutputFormat(MediaRecorder.OutputFormat.AMR_NB);//设置音频格式(3gp)
+                    recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);//设置音频编码
+                    recorder.setOutputFile(mSaveFilePath); //设置录音保存的文件
+                }catch (Throwable e) {
+                    Log.w(TAG, e);
+                }
+            }
+        }
+
+        /**
+         * 得到 录音文件
+         * @return
+         */
+        private String getFilePathToSaveRecorder(String phonenumber){
+            createRecorderFile();
+            String currentTime = getCurrentTime();
+          //  return DIR_PATH + "/" + phonenumber + "_" + currentTime + ".amr";
+            return DIR_PATH + "/" + data_id + "_" +phonenumber+"_"+ currentTime + ".amr";
+        }
+
+        private final String DIR_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/recorder";
+
+        //创建保存录音的目录
+        private void createRecorderFile() {
+            File file=new File(DIR_PATH);
+            if (!file.exists()){
+                file.mkdir();
+            }
+        }
+        //获取当前时间，以其为名来保存录音
+        private String getCurrentTime(){
+            SimpleDateFormat format=new SimpleDateFormat("yyyyMMddHHmmss");
+            Date date=new Date();
+            String str=format.format(date);
+            return str;
+        }
+
+    }
+    public class Binder extends android.os.Binder{
+        public void setData(String data){
+            RecorderService.this.data_id = data;
+        }
+        public RecorderService getService(){
+            return RecorderService.this;
+        }
+    }
+    private CallBack callback = null;
+
+    public void setCallback(CallBack callback) {
+        this.callback = callback;
+    }
+
+    public CallBack getCallback() {
+        return callback;
+    }
+
+    public static interface CallBack{
+        void onDataChange(String data);
+    }
+}

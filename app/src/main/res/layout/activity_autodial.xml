@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 当前状态 -->
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/color_blue_4f6ba5"
+        android:gravity="left|center_vertical"
+        android:paddingLeft="10dp"
+        android:textColor="@color/color_black_trans_90_E5000000"
+        android:textSize="15dp"
+        android:text="测试"/>
+
+    <LinearLayout
+        android:id="@+id/content_zone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/status"
+        android:layout_marginTop="40dp"
+        android:background="@color/color_blue_4f6ba5"
+        android:orientation="vertical">
+        `
+        <!-- 标题 -->
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:paddingLeft="10dp"
+            android:text="@string/dial_title"
+            android:textColor="@color/color_black_trans_90_E5000000"
+            android:textSize="15dp" />
+
+        <!-- 姓名 -->
+        <TextView
+            android:id="@+id/name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:paddingLeft="10dp"
+            android:text="@string/dial_name"
+            android:textColor="@color/color_black_trans_90_E5000000"
+            android:textSize="15dp" />
+
+        <!-- 姓名 -->
+        <TextView
+            android:id="@+id/price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:paddingLeft="10dp"
+            android:text="@string/dial_price"
+            android:textColor="@color/color_black_trans_90_E5000000"
+            android:textSize="15dp" />
+
+        <!-- 电话 -->
+        <TextView
+            android:id="@+id/phone_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:paddingLeft="10dp"
+            android:text="@string/dial_phone_number"
+            android:textColor="@color/color_black_trans_90_E5000000"
+            android:textSize="15dp" />
+
+        <!-- 时间 -->
+        <TextView
+            android:id="@+id/time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="40dp"
+            android:layout_marginTop="10dp"
+            android:paddingLeft="10dp"
+            android:text="@string/dial_time"
+            android:textColor="@color/color_black_trans_90_E5000000"
+            android:textSize="15dp" />
+
+    </LinearLayout>
+
+    <!-- 请求次数-->
+    <TextView
+        android:id="@+id/times"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_below="@id/content_zone"
+        android:layout_marginTop="20dp"
+        android:background="@color/color_blue_4f6ba5"
+        android:paddingLeft="10dp"
+        android:text="@string/request_times"
+        android:textColor="@color/color_black_trans_90_E5000000"
+        android:textSize="15dp" />
+
+</RelativeLayout>
